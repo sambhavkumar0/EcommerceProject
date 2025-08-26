@@ -10,18 +10,39 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 public class SecurityConfig {
 
-    // 👇 Define PasswordEncoder bean so it can be injected in UserService
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // recommended for hashing passwords
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // disable CSRF for testing
+            .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll() // allow all requests without authentication
+                /* ✅ Public pages */
+                .requestMatchers("/", "/login", "/register", "/user/register",
+                                 "/css/**", "/js/**", "/images/**").permitAll()
+
+                /* ✅ Admin-only pages */
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+
+                /* ✅ Customer (USER) pages */
+                .requestMatchers("/products/**", "/cart/**", "/orders/**").hasAnyRole("USER", "ADMIN")
+
+                /* ✅ Any other request requires authentication */
+                .anyRequest().authenticated()
+            )
+            .formLogin(login -> login
+                .loginPage("/login")
+                // After login, redirect based on role
+                .defaultSuccessUrl("/products", true)   // ✅ customers go here
+                .permitAll()
+            )
+            .logout(logout -> logout
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/login?logout")
+                .permitAll()
             );
 
         return http.build();

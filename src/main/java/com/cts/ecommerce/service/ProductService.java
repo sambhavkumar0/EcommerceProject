@@ -49,5 +49,33 @@ public class ProductService {
     public void deleteProduct(Long id) {
         productRepository.deleteById(id);
     }
+    
+    public Product updateProduct(Long id, Product updatedProduct) {
+        return productRepository.findById(id).map(existingProduct -> {
+            // Update only relevant fields
+        	existingProduct.setName(updatedProduct.getName());
+        	existingProduct.setDescription(updatedProduct.getDescription());
+        	existingProduct.setPrice(updatedProduct.getPrice());
+        	existingProduct.setStockQuantity(updatedProduct.getStockQuantity());   // ✅ correct
+
+        	// Update category if provided
+        	if (updatedProduct.getCategory() != null) {
+        	    Long categoryId = updatedProduct.getCategory().getCategoryId();   // ✅ correct
+        	    Category category = categoryRepository.findById(categoryId)
+        	            .orElseThrow(() -> new ResourceNotFoundException("Category with ID " + categoryId + " not found"));
+        	    existingProduct.setCategory(category);
+        	}
+
+            return productRepository.save(existingProduct);
+        }).orElseThrow(() -> new ResourceNotFoundException("Product with ID " + id + " not found"));
+    }
+    
+    
+    
+    
+    
+    
+    
+    
 }
 

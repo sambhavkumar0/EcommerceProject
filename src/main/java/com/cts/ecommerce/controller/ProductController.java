@@ -1,79 +1,52 @@
 package com.cts.ecommerce.controller;
 
-import java.util.List;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import com.cts.ecommerce.model.Product;
 import com.cts.ecommerce.service.ProductService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 
-@RestController
-@RequestMapping("/api/products")
+@Controller
+@RequestMapping("/admin/products")
 public class ProductController {
 
-    private final ProductService service;
+    @Autowired
+    private ProductService productService;
 
-    public ProductController(ProductService service) {
-        this.service = service;
-    }
-
-    // ✅ GET all products
     @GetMapping
-    public List<Product> getAllProducts() {
-        return service.getAllProducts();
+    public String listProducts(Model model) {
+        model.addAttribute("products", productService.getAllProducts());
+        return "products";   // Admin view (products.html)
     }
 
-    // ✅ GET product by ID
-    @GetMapping("/{id}")
-    public ResponseEntity<Product> getProduct(@PathVariable Long id) {
-        // Service will throw ResourceNotFoundException if not found
-        return ResponseEntity.ok(service.getProductById(id));
+    @GetMapping("/new")
+    public String showAddForm(Model model) {
+        model.addAttribute("product", new Product());
+        return "add-product";
     }
 
-    // ✅ POST create product
     @PostMapping
-    public ResponseEntity<Product> createProduct(@RequestBody ProductRequest request) {
-        Product product = new Product();
-        product.setName(request.getName());
-        product.setDescription(request.getDescription());
-        product.setPrice(request.getPrice());
-        product.setStockQuantity(request.getStockQuantity());
-        product.setImageUrl(request.getImageUrl());
-
-        Product savedProduct = service.createProduct(product, request.getCategoryId());
-        return ResponseEntity.ok(savedProduct);
+    public String saveProduct(@ModelAttribute Product product) {
+        productService.saveProduct(product);
+        return "redirect:/admin/products";
     }
 
-    // ✅ DELETE product
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
-        // Service will throw ResourceNotFoundException if not found
-        service.deleteProduct(id);
-        return ResponseEntity.noContent().build();
+    @GetMapping("/edit/{id}")
+    public String editProduct(@PathVariable Long id, Model model) {
+        model.addAttribute("product", productService.getProductById(id));
+        return "edit-product";
     }
 
-    // ✅ DTO for product creation
-    public static class ProductRequest {
-        private String name;
-        private String description;
-        private java.math.BigDecimal price;
-        private Integer stockQuantity;
-        private Long categoryId;
-        private String imageUrl;
+    @PostMapping("/update/{id}")
+    public String updateProduct(@PathVariable Long id, @ModelAttribute Product product) {
+        productService.updateProduct(id, product);
+        return "redirect:/admin/products";
+    }
 
-        // Getters & setters
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
-        public String getDescription() { return description; }
-        public void setDescription(String description) { this.description = description; }
-        public java.math.BigDecimal getPrice() { return price; }
-        public void setPrice(java.math.BigDecimal price) { this.price = price; }
-        public Integer getStockQuantity() { return stockQuantity; }
-        public void setStockQuantity(Integer stockQuantity) { this.stockQuantity = stockQuantity; }
-        public Long getCategoryId() { return categoryId; }
-        public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
-        public String getImageUrl() { return imageUrl; }
-        public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    @GetMapping("/delete/{id}")
+    public String deleteProduct(@PathVariable Long id) {
+        productService.deleteProduct(id);
+        return "redirect:/admin/products";
     }
 }

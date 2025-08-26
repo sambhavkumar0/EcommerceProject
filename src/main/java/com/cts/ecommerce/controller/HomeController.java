@@ -6,9 +6,18 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class HomeController {
 
-    // Handles http://localhost:8080/ or /home
-    @GetMapping({"/", "/home"})
+    @GetMapping("/")
     public String home() {
-        return "home"; // renders home.html
+        return "home"; // open to all
+    }
+
+    @GetMapping("/login")
+    public String loginPage() {
+        return "login";
+    }
+
+    @GetMapping("/access-denied")
+    public String accessDenied() {
+        return "access-denied";
     }
 }
